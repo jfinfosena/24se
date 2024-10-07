@@ -52,8 +52,7 @@ draft: false
   void pot_task(void *pvParameters) {
     while (1) {
       int pot_value = analogRead(pot_pin);
-      // Puedes enviar el valor a otra tarea usando una variable global o un mecanismo de comunicación 
-      // (como un semáforo, una cola o un mutex)
+      // Puedes enviar el valor a otra tarea usando una variable global      
       vTaskDelay(10 / portTICK_PERIOD_MS); // Espera 10ms
     }
   }
@@ -65,7 +64,7 @@ draft: false
   void led_task(void *pvParameters) {
     int brightness = 0; // Brillo actual del LED (0-255)
     while (1) {
-      // Recibe el valor del potenciómetro (puedes usar una variable global o un mecanismo de comunicación)
+      // Recibe el valor del potenciómetro (puedes usar una variable global)
       // Ajusta el brillo del LED basado en el valor del potenciómetro
       analogWrite(led_pin, brightness); 
       vTaskDelay(10 / portTICK_PERIOD_MS); // Espera 10ms
