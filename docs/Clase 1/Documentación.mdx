@@ -1,0 +1,167 @@
+---
+sidebar_position: 1
+title: 'RTOS'
+draft: false
+---
+
+## RTOS: Sistemas Operativos en Tiempo Real - Explorando FreeRTOS en ESP32
+
+![RTOS](https://miro.medium.com/v2/resize:fit:1024/1*mPgNgBGxG-2G51Ry4DCatQ.jpeg)
+
+Los Sistemas Operativos en Tiempo Real (RTOS, Real-Time Operating Systems) son sistemas operativos diseñados para aplicaciones que requieren una respuesta rápida y predecible a eventos externos. A diferencia de los sistemas operativos tradicionales (como Windows o macOS), los RTOS priorizan la latencia y el tiempo de respuesta sobre la multitarea general. 
+
+### **¿Por qué usar un RTOS?**
+
+Los RTOS ofrecen una serie de ventajas para el desarrollo de sistemas embebidos, especialmente cuando se trabaja con microcontroladores como el ESP32:
+
+* **Multitarea:** Permiten ejecutar múltiples tareas de forma simultánea, lo que aumenta la eficiencia y la capacidad de respuesta del sistema.
+* **Gestión de recursos:** Gestionan eficientemente recursos como memoria, periféricos y tiempos de ejecución, optimizando el rendimiento del dispositivo.
+* **Abstracción de hardware:**  Proporcionan una interfaz consistente para interactuar con el hardware del dispositivo, simplificando el desarrollo de software.
+* **Priorización de tareas:**  Permite asignar prioridades a las diferentes tareas, asegurando que las más importantes reciban la atención necesaria.
+* **Sincronización y comunicación:**  Ofrecen mecanismos para la sincronización y la comunicación entre diferentes tareas, evitando conflictos y garantizando la correcta ejecución del sistema.
+
+### **FreeRTOS: un RTOS popular y versátil**
+
+FreeRTOS es un RTOS de código abierto, ligero y ampliamente utilizado en el desarrollo de sistemas embebidos. Su popularidad se debe a:
+
+* **Facilidad de uso:** Es relativamente simple de entender y usar, especialmente para programadores principiantes.
+* **Bajo consumo de recursos:** Es ligero y eficiente, adecuado para dispositivos con recursos limitados.
+* **Amplia compatibilidad:**  Soporta una gran variedad de plataformas de hardware, incluyendo el ESP32.
+* **Gran comunidad:** Cuenta con una gran comunidad de usuarios y desarrolladores que ofrecen soporte y recursos.
+
+### **ESP32: un microcontrolador ideal para FreeRTOS**
+
+El ESP32 es un microcontrolador de doble núcleo de bajo consumo de energía, desarrollado por Espressif Systems. Ofrece una combinación ideal de rendimiento, conectividad inalámbrica (WiFi y Bluetooth) y bajo costo, lo que lo hace perfecto para proyectos de sistemas embebidos:
+
+* **Procesamiento de doble núcleo:** Permite ejecutar tareas intensivas de forma eficiente.
+* **Conectividad inalámbrica:** Facilita la integración de dispositivos a redes sin cables.
+* **Bajo consumo de energía:** Ideal para proyectos con baterías o fuentes de energía limitadas.
+* **Amplia gama de periféricos:** Incluye sensores, actuadores y otros periféricos para una amplia variedad de aplicaciones.
+
+**Combinando FreeRTOS y ESP32:**
+
+La combinación de FreeRTOS y ESP32 ofrece una plataforma poderosa para el desarrollo de aplicaciones embebidas.  FreeRTOS proporciona las herramientas de gestión y control necesarias para aprovechar al máximo el potencial del ESP32, permitiendo la creación de dispositivos inteligentes y complejos.
+
+**FreeRTOS en ESP32 ofrece un entorno de desarrollo potente y flexible, ideal para la creación de sistemas embebidos innovadores y eficientes.** 
+
+## Creando y Gestionando Tareas en FreeRTOS/ESP32 con Arduino
+
+Para usar FreeRTOS en tu proyecto Arduino con ESP32, necesitarás configurar el entorno de desarrollo de Arduino para incluir las librerías FreeRTOS. Una vez hecho esto, puedes comenzar a crear y gestionar tareas de la siguiente manera:
+
+### **1. Configuración del entorno de desarrollo:**
+
+* **Instalación de la librería FreeRTOS:** Busca la librería "FreeRTOS" en el administrador de bibliotecas de Arduino (Sketch > Include Library > Manage Libraries...).
+* **Instalación del ESP32 Core:** Si no lo tienes instalado, agrega el ESP32 Core a tu IDE de Arduino (Herramientas > Tablero > ESP32 Arduino by Espressif Systems).
+
+### **2. Creando una tarea con xTaskCreatePinnedToCore():**
+
+* **Definición de la función de la tarea:**
+  ```c
+  void tarea_blink(void *pvParameters) {
+    while (1) {
+      digitalWrite(LED_BUILTIN, HIGH);
+      vTaskDelay(500 / portTICK_PERIOD_MS); // Espera 500ms
+      digitalWrite(LED_BUILTIN, LOW);
+      vTaskDelay(500 / portTICK_PERIOD_MS); // Espera 500ms
+    }
+  }
+  ```
+* **Creación de la tarea con xTaskCreatePinnedToCore():**
+  ```c
+  void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+    xTaskCreatePinnedToCore(tarea_blink, "Tarea_Blink", 2048, NULL, 1, NULL, 0); // Crea tarea en el núcleo 0
+  }
+
+  void loop() {
+    // No es necesario, FreeRTOS se encarga de ejecutar las tareas
+  }
+  ```
+
+### **3. Gestionando las tareas:**
+
+* **Suspensión y reanudación:**
+  ```c
+  // En setup():
+  xTaskCreatePinnedToCore(tarea_blink, "Tarea_Blink", 2048, NULL, 1, &tarea_handle, 0);
+  
+  // En alguna parte del código:
+  vTaskSuspend(tarea_handle); // Suspende la tarea
+  // ... código para reiniciar la tarea ...
+  vTaskResume(tarea_handle); // Reanuda la tarea
+  ```
+* **Eliminación:**
+  ```c
+  vTaskDelete(tarea_handle); // Elimina la tarea
+  ```
+* **Cambio de prioridad:**
+  ```c
+  vTaskPrioritySet(tarea_handle, 2); // Cambia la prioridad a 2
+  ```
+* **Obtención del estado de una tarea:**
+  ```c
+  TaskStatus_t status = eTaskGetState(tarea_handle); // Obtiene el estado de la tarea
+  ```
+* **Control de la pila:**
+  ```c
+  uint16_t highWaterMark = uxTaskGetStackHighWaterMark(tarea_handle); // Obtiene el máximo uso de la pila
+  ```
+
+### **4. Funciones de tiempo:**
+
+* **`vTaskDelay(xTicksToWait)`:** Suspende la tarea actual por un tiempo determinado en ticks.
+* **`portTICK_PERIOD_MS`:** Define el período de un tick en milisegundos.
+* **Ejemplo:** Esperar 1 segundo:
+  ```c
+  vTaskDelay(1000 / portTICK_PERIOD_MS); 
+  ```
+
+**Ejemplo completo con dos tareas:**
+
+```c
+#include <Arduino.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+TaskHandle_t tarea_blink_handle;
+TaskHandle_t tarea_sensor_handle;
+
+void tarea_blink(void *pvParameters) {
+  while (1) {
+    digitalWrite(LED_BUILTIN, HIGH);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    digitalWrite(LED_BUILTIN, LOW);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
+}
+
+void tarea_sensor(void *pvParameters) {
+  while (1) {
+    // Leer valor del sensor
+    // ...
+    // Procesar el valor del sensor
+    // ...
+    vTaskDelay(100 / portTICK_PERIOD_MS); // Espera 100ms
+  }
+}
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  xTaskCreatePinnedToCore(tarea_blink, "Tarea_Blink", 2048, NULL, 1, &tarea_blink_handle, 0);
+  xTaskCreatePinnedToCore(tarea_sensor, "Tarea_Sensor", 2048, NULL, 2, &tarea_sensor_handle, 1); // Crea tarea en el núcleo 1
+}
+
+void loop() {
+  // No es necesario, FreeRTOS se encarga de ejecutar las tareas
+}
+```
+
+**Recuerda:**
+
+* **Prioridad de las tareas:** Las tareas con mayor prioridad se ejecutan con mayor frecuencia.
+* **Tamaño de la pila:** Asigna una pila lo suficientemente grande para evitar errores de pila.
+* **Eficiencia:** Ten en cuenta el consumo de recursos al crear tareas para evitar sobrecargar el sistema.
+* **Sincronización:** Si las tareas necesitan compartir recursos, usa mecanismos de sincronización como semáforos, mutexes y colas para evitar conflictos.
+
+Con estos ejemplos y consejos, puedes comenzar a utilizar FreeRTOS en tu proyecto Arduino ESP32 para crear aplicaciones embebidas más eficientes y complejas.
+

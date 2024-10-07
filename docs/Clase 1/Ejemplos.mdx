@@ -1,0 +1,213 @@
+---
+sidebar_position: 2
+title: 'Ejemplos'
+draft: false
+---
+
+### 1. Control de LED RGB con Botones e Intensidad Variable (Wokwi)
+
+**Objetivo:** Implementar un sistema que controle la intensidad de cada color de un LED RGB (rojo, verde, azul) utilizando tres botones independientes y FreeRTOS en un ESP32 simulado en Wokwi. Cada botón controlará la intensidad de un color con 10 niveles diferentes.
+
+**Componentes en Wokwi:**
+
+* ESP32
+* LED RGB
+* Tres botones (uno para rojo, uno para verde, uno para azul)
+
+**Código:**
+
+```c
+#include <Arduino.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+// Pines para el LED RGB
+const int redPin = 2;  // Rojo
+const int greenPin = 4; // Verde
+const int bluePin = 12; // Azul
+
+// Pines para los botones
+const int buttonRedPin = 13; // Botón para rojo
+const int buttonGreenPin = 14; // Botón para verde
+const int buttonBluePin = 15; // Botón para azul
+
+// Intensidades de los LEDs (0-255)
+int redIntensity = 0;
+int greenIntensity = 0;
+int blueIntensity = 0;
+
+// Incremento de intensidad por cada pulsación de botón
+const int intensityIncrement = 25; // 10 niveles de intensidad (255 / 10 = 25.5, redondeado a 25)
+
+// Tarea para controlar los botones
+void buttonTask(void *pvParameters) {
+  while (1) {
+    if (digitalRead(buttonRedPin) == LOW) { // Botón rojo presionado
+      redIntensity = (redIntensity + intensityIncrement) % 256; 
+      vTaskDelay(200 / portTICK_PERIOD_MS); // Retraso para evitar rebotes
+    }
+    if (digitalRead(buttonGreenPin) == LOW) { // Botón verde presionado
+      greenIntensity = (greenIntensity + intensityIncrement) % 256;
+      vTaskDelay(200 / portTICK_PERIOD_MS); // Retraso para evitar rebotes
+    }
+    if (digitalRead(buttonBluePin) == LOW) { // Botón azul presionado
+      blueIntensity = (blueIntensity + intensityIncrement) % 256;
+      vTaskDelay(200 / portTICK_PERIOD_MS); // Retraso para evitar rebotes
+    }
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
+}
+
+// Tarea para controlar el LED RGB
+void ledTask(void *pvParameters) {
+  while (1) {
+    analogWrite(redPin, redIntensity);
+    analogWrite(greenPin, greenIntensity);
+    analogWrite(bluePin, blueIntensity);
+    vTaskDelay(10 / portTICK_PERIOD_MS); // Frecuencia de actualización del LED
+  }
+}
+
+void setup() {
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(buttonRedPin, INPUT_PULLUP);
+  pinMode(buttonGreenPin, INPUT_PULLUP);
+  pinMode(buttonBluePin, INPUT_PULLUP);
+
+  xTaskCreatePinnedToCore(buttonTask, "ButtonTask", 2048, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(ledTask, "LedTask", 2048, NULL, 1, NULL, 1);
+}
+
+void loop() {} 
+```
+
+**Explicación:**
+
+1. **Definiciones:** Se declaran los pines de los componentes y se inicializan las intensidades de los LEDs a 0. 
+2. **Tarea `buttonTask`:** Maneja los tres botones.
+    * Cuando se presiona un botón, la intensidad del color correspondiente se incrementa en `intensityIncrement`.
+    * Se utiliza el operador `%` para evitar que la intensidad supere 255.
+    * Se implementa un retraso para evitar rebotes al presionar los botones.
+3. **Tarea `ledTask`:** Controla el LED RGB, ajustando la intensidad de cada color usando `analogWrite` con las variables `redIntensity`, `greenIntensity` y `blueIntensity`.
+4. **`setup()`:** Inicializa los pines y crea las dos tareas.
+5. **`loop()`:** No es necesaria.
+
+**Simulación en Wokwi:**
+
+1. Carga el código en el ESP32 virtual en Wokwi.
+2. Simula el sistema.
+3. Experimenta:
+    * Presiona los botones para aumentar la intensidad de cada color del LED RGB.
+    * Observa cómo el LED cambia de color y de intensidad según las pulsaciones de los botones.
+
+**Puntos importantes:**
+
+* Se utilizan dos tareas independientes: una para los botones y otra para el LED RGB.
+* Se usan variables globales para compartir información entre las tareas.
+* Se implementa un retraso en la tarea del botón para evitar rebotes.
+
+**Extensión:**
+
+* Implementa un modo de "reinicio" que restablezca la intensidad de todos los colores a 0.
+* Crea una interfaz de usuario (botones o serial monitor) para configurar la cantidad de niveles de intensidad.
+* Añade un sensor de luz (simulado en Wokwi) que ajuste automáticamente la intensidad de los LEDs en función de la luz ambiental.
+
+¡Espero que esta actividad te ayude a crear un sistema de iluminación RGB con control de intensidad utilizando FreeRTOS en ESP32!
+
+
+
+
+## 2. Generación de 4 Señales con Diferentes Frecuencias usando FreeRTOS en ESP32
+
+Este ejemplo muestra cómo generar cuatro señales con diferentes frecuencias utilizando cuatro tareas independientes en FreeRTOS para un ESP32.
+
+**Hardware:**
+
+* ESP32 (cualquier placa ESP32)
+* 4 LEDS con resistencias limitadoras de corriente (uno para cada señal)
+
+**Código:**
+
+```c
+#include <Arduino.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+// Pins for the LEDs
+const int LED_PINS[] = {2, 4, 12, 13};
+
+// Frequencies of the signals
+const int FREQUENCIES[] = {1, 2, 5, 10}; // Frequencies in Hz
+
+// Task for generating signal 1
+void signal1_task(void *pvParameters) {
+  while (1) {
+    digitalWrite(LED_PINS[0], HIGH);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[0]); 
+    digitalWrite(LED_PINS[0], LOW);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[0]); 
+  }
+}
+
+// Task for generating signal 2
+void signal2_task(void *pvParameters) {
+  while (1) {
+    digitalWrite(LED_PINS[1], HIGH);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[1]); 
+    digitalWrite(LED_PINS[1], LOW);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[1]); 
+  }
+}
+
+// Task for generating signal 3
+void signal3_task(void *pvParameters) {
+  while (1) {
+    digitalWrite(LED_PINS[2], HIGH);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[2]); 
+    digitalWrite(LED_PINS[2], LOW);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[2]); 
+  }
+}
+
+// Task for generating signal 4
+void signal4_task(void *pvParameters) {
+  while (1) {
+    digitalWrite(LED_PINS[3], HIGH);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[3]); 
+    digitalWrite(LED_PINS[3], LOW);
+    vTaskDelay(1000 / portTICK_PERIOD_MS / FREQUENCIES[3]); 
+  }
+}
+
+void setup() {
+  // Initialize the LED pins as outputs
+  for (int i = 0; i < 4; i++) {
+    pinMode(LED_PINS[i], OUTPUT);
+  }
+
+  // Create the tasks for generating the signals
+  xTaskCreatePinnedToCore(signal1_task, "Signal1_Task", 2048, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(signal2_task, "Signal2_Task", 2048, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(signal3_task, "Signal3_Task", 2048, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(signal4_task, "Signal4_Task", 2048, NULL, 1, NULL, 1);
+}
+
+void loop() {
+  // Not needed, FreeRTOS handles running the tasks
+}
+```
+
+**Cambios realizados:**
+
+* Se han cambiado los nombres de las funciones de las tareas a inglés:
+    * `tarea_señal1` -> `signal1_task`
+    * `tarea_señal2` -> `signal2_task`
+    * `tarea_señal3` -> `signal3_task`
+    * `tarea_señal4` -> `signal4_task`
+* Se ha añadido un comentario a la función `loop()` para aclarar que no es necesaria ya que FreeRTOS se encarga de ejecutar las tareas.
+
+El resto del código permanece igual, con las definiciones de pines, frecuencias y la creación de las tareas.
+
+Espero que este cambio te sea útil para mejorar la claridad y la legibilidad del código.

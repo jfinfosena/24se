@@ -1,0 +1,108 @@
+---
+sidebar_position: 3
+title: 'Actividad'
+draft: false
+---
+
+## Actividad: Control de Brillo de LED con Potenciómetro y FreeRTOS en ESP32 (Wokwi)
+
+**Objetivo:** Implementar un sistema que controle el brillo de un LED utilizando un potenciómetro y FreeRTOS en un ESP32, utilizando la plataforma online de Wokwi para la simulación. El brillo del LED se ajustará de acuerdo con el valor leído del potenciómetro.
+
+**Materiales (simulación):**
+
+* Simulación de ESP32 en Wokwi
+* Componente virtual de LED con resistencia limitadora de corriente en Wokwi
+* Componente virtual de potenciómetro en Wokwi
+
+**Requisitos:**
+
+* Conocimiento básico de Arduino y FreeRTOS
+* Familiaridad con la programación de LEDS y potenciómetros en Arduino
+* Acceso a la plataforma online de Wokwi
+
+**Paso a Paso:**
+
+**1. Configuración del Proyecto en Wokwi:**
+
+* Crea un nuevo proyecto en Wokwi.
+* Agrega un componente virtual de ESP32 a tu proyecto.
+* Agrega un componente virtual de LED con resistencia limitadora de corriente.
+* Agrega un componente virtual de potenciómetro.
+
+**2. Código:**
+
+* **Incluir las librerías FreeRTOS:**
+
+  ```c
+  #include <Arduino.h>
+  #include "freertos/FreeRTOS.h"
+  #include "freertos/task.h"
+  ```
+
+* **Definir los pines del ESP32 para el LED y el potenciómetro:**
+
+  ```c
+  const int led_pin = 2; // Pin del LED (simulado)
+  const int pot_pin = A0; // Pin del potenciómetro (simulado)
+  ```
+
+* **Crear una tarea para leer el valor del potenciómetro:**
+
+  ```c
+  void pot_task(void *pvParameters) {
+    while (1) {
+      int pot_value = analogRead(pot_pin);
+      // Puedes enviar el valor a otra tarea usando una variable global o un mecanismo de comunicación 
+      // (como un semáforo, una cola o un mutex)
+      vTaskDelay(10 / portTICK_PERIOD_MS); // Espera 10ms
+    }
+  }
+  ```
+
+* **Crear una tarea para controlar el brillo del LED:**
+
+  ```c
+  void led_task(void *pvParameters) {
+    int brightness = 0; // Brillo actual del LED (0-255)
+    while (1) {
+      // Recibe el valor del potenciómetro (puedes usar una variable global o un mecanismo de comunicación)
+      // Ajusta el brillo del LED basado en el valor del potenciómetro
+      analogWrite(led_pin, brightness); 
+      vTaskDelay(10 / portTICK_PERIOD_MS); // Espera 10ms
+    }
+  }
+  ```
+
+* **En la función `setup()`, crea las tareas para el potenciómetro y el LED:**
+
+  ```c
+  void setup() {
+    pinMode(led_pin, OUTPUT);
+    xTaskCreatePinnedToCore(pot_task, "Pot_Task", 2048, NULL, 1, NULL, 0);
+    xTaskCreatePinnedToCore(led_task, "LED_Task", 2048, NULL, 1, NULL, 1);
+  }
+  ```
+
+* **La función `loop()` no es necesaria:**
+
+  ```c
+  void loop() {}
+  ```
+
+**3. Simulación en Wokwi:**
+
+* **Cargar el código:** Copia el código en la sección de código del ESP32 en Wokwi.
+* **Ejecutar la simulación:** Ejecuta la simulación en Wokwi.
+* **Interactuar con la simulación:** Mueve el potenciómetro virtual y observa cómo el brillo del LED simulado cambia de acuerdo con el valor del potenciómetro.
+
+**4. Extensión:**
+
+* **Implementa un mecanismo para guardar el brillo del LED en la memoria EEPROM del ESP32 (simulado), para que se mantenga el brillo incluso después de reiniciar la simulación.**
+* **Crea una interfaz de usuario (por ejemplo, botones o un serial monitor) para controlar el brillo del LED además del potenciómetro.**
+* **Añade un temporizador que cambie el brillo del LED de forma gradual o que parpadee el LED a una frecuencia determinada.**
+
+
+
+
+
+
